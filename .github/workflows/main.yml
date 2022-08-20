@@ -230,12 +230,12 @@ jobs:
           if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
             arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
-          if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
-            arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
-          fi ;
-          if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
-            arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
-          fi ;
+  #        if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
+  #          arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
+  #        fi ;
+  #        if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
+  #          arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
+  #        fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
             arduino --verify                 --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
@@ -277,4 +277,11 @@ jobs:
           if [[ "$BOARD" =~ "rp2040:rp2040:"      ]]; then
             arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
+
+# AC
+echo "--------"
+ls
+echo "--------"
+ls ..
+echo "--------"
 
