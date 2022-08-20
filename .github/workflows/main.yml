@@ -289,4 +289,4 @@ jobs:
           echo "--------"
           ls ..
           echo "--------"
-          ll /tmp/arduino_build_86486/
+          ls -al /tmp/arduino_build_86486/
