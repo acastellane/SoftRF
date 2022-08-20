@@ -277,11 +277,13 @@ jobs:
           if [[ "$BOARD" =~ "rp2040:rp2040:"      ]]; then
             arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
-
-# AC
-echo "--------"
-ls
-echo "--------"
-ls ..
-echo "--------"
+          # AC
+          echo "--------"
+          uname -a
+          pwd
+          cat /etc/os-release
+          ls
+          echo "--------"
+          ls ..
+          echo "--------"
 
