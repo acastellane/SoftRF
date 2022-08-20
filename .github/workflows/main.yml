@@ -280,10 +280,13 @@ jobs:
           # AC
           echo "--------"
           uname -a
+          echo "--------"
           pwd
+          echo "--------"
           cat /etc/os-release
+          echo "--------"
           ls
           echo "--------"
           ls ..
           echo "--------"
-
+          ll /tmp/arduino_build_86486/
