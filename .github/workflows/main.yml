@@ -229,7 +229,6 @@ jobs:
       - name: Run script
         run: |
           if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
-          --pref build.path=~/
           #  arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
             arduino --pref build.path=~/ --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
