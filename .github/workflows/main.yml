@@ -89,6 +89,7 @@ jobs:
             arduino --board $BOARD --save-prefs ;
             arduino --pref "compiler.warning_level=all" --save-prefs ;
             arduino --pref "custom_LwIPVariant=nodemcuv2_Prebuilt" --save-prefs ;
+            arduino --pref "build.path=$PWD"
           fi
           if [[ "$BOARD" =~ "esp32:esp32:esp32:" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://github.com/espressif/arduino-esp32/releases/download/1.0.5/package_esp32_index.json" --save-prefs ;
@@ -284,12 +285,12 @@ jobs:
           pwd
           echo "--------"
           cat /etc/os-release
-          echo "--------"
-          ls
-          echo "--------"
+          echo "ls $pwd--------"
+          ls $PWD/
+          echo "ls .. --------"
           ls ..
           echo "--------"
           find /tmp/. -name *.elf
           find /tmp/. -name *.bin
-          
+          echo "ls -al /tmp/arduino_build_* --------"
           ls -al /tmp/arduino_build_*
