@@ -290,6 +290,8 @@ jobs:
           ls $PWD/
           echo "ls .. --------"
           ls ..
+          echo "ls ~/ --------"
+          ls ~/
           echo "--------"
           #find /tmp/. -name *.elf
           #find /tmp/. -name *.bin
