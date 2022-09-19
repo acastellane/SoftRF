@@ -236,7 +236,7 @@ jobs:
         run: |
           if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
           #  arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
-            arduino --pref build.path=./build --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
+            arduino --pref build.path=./build --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;           cp ./build/SoftRF.ino.bin ./build/SoftRF_esp8266.ino.bin
           fi ;
           #        if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
           #          arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
@@ -245,7 +245,7 @@ jobs:
           #          arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
           #        fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
-            arduino --pref build.path=./build --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
+            arduino --pref build.path=./build --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;           cp ./build/SoftRF.ino.bin ./build/SoftRF_esp32.ino.bin
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:esp32:"  ]]; then
             arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
@@ -293,15 +293,23 @@ jobs:
           echo "--------"
           cat /etc/os-release
           echo "ls $pwd--------"
+          ls ~/
           ls $PWD/
           echo "ls .. --------"
           ls ..
           echo "ls ~/ --------"
-          ls ~/
           echo "------------ ls build ----------"
           ls ./build
+
           echo "--------"
           #find /tmp/. -name *.elf
           #find /tmp/. -name *.bin
           #echo "ls -al /tmp/arduino_build_* --------"
           #ls -al /tmp/arduino_build_*
+          
+      - name: Upload the artifacts
+        uses: skx/github-action-publish-binaries@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: '*.bin'
