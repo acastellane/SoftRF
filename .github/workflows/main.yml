@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         # board: ['esp8266:esp8266:nodemcuv2:xtal=80,eesz=4M3M', 'esp32:esp32:esp32:PartitionScheme=min_spiffs,CPUFreq=80,FlashMode=dio,FlashFreq=80,FlashSize=4M,DebugLevel=none', 'STM32:stm32:Nucleo_64', 'STM32:stm32:GenF1', 'raspberry', 'CubeCell:CubeCell:CubeCell-GPS', 'adafruit:nrf52:pca10056', 'arduino:samd:mzero_bl', 'arduino:avr:mega', 'CubeCell:CubeCell:CubeCell-Board-PRO', 'rp2040:rp2040:rpipico', 'esp32:esp32:esp32s2', 'esp32:esp32:esp32s3']
-        board: ['esp8266:esp8266:nodemcuv2:xtal=80,eesz=4M3M']
+        board: ['esp8266:esp8266:nodemcuv2:xtal=80,eesz=4M3M', 'esp32:esp32:esp32:PartitionScheme=min_spiffs,CPUFreq=80,FlashMode=dio,FlashFreq=80,FlashSize=4M,DebugLevel=none']
 
         # board: ['esp8266:esp8266:nodemcuv2:xtal=80,eesz=4M3M', 'esp32:esp32:esp32:PartitionScheme=min_spiffs,CPUFreq=80,FlashMode=dio,FlashFreq=80,FlashSize=4M,DebugLevel=none', 'STM32:stm32:Nucleo_64', 'STM32:stm32:GenF1', 'energia:cc13xx:LAUNCHXL_CC1310', 'raspberry', 'CubeCell:CubeCell:CubeCell-GPS', 'adafruit:nrf52:pca10056', 'arduino:samd:mzero_bl', 'arduino:avr:mega', 'CubeCell:CubeCell:CubeCell-Board-PRO', 'rp2040:rp2040:rpipico']
 
@@ -87,6 +87,9 @@ jobs:
             arduino --pref "boardsmanager.additional.urls=https://github.com/esp8266/Arduino/releases/download/2.7.0/package_esp8266com_index.json" --save-prefs ;
             arduino --install-boards esp8266:esp8266 ;
             arduino --board $BOARD --save-prefs ;
+            #AC added a build dir 
+            mkdir build
+            arduino --pref "build.path=$PWD/build"
             arduino --pref "compiler.warning_level=all" --save-prefs ;
             arduino --pref "custom_LwIPVariant=nodemcuv2_Prebuilt" --save-prefs ;
             arduino --pref "build.path=$PWD"
@@ -95,6 +98,9 @@ jobs:
             arduino --pref "boardsmanager.additional.urls=https://github.com/espressif/arduino-esp32/releases/download/1.0.5/package_esp32_index.json" --save-prefs ;
             arduino --install-boards esp32:esp32 ;
             arduino --board $BOARD --save-prefs ;
+            #AC added a build dir
+            mkdir build
+            arduino --pref "build.path=$PWD/build"
             cd $HOME/.arduino15/packages/esp32/hardware/esp32/1.0.5/tools/sdk/lib ;
             rm -f libbt.a ;
             cp $GITHUB_WORKSPACE/software/firmware/binaries/ESP32/misc/libbt.a . ;
