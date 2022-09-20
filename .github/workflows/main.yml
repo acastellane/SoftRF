@@ -308,7 +308,7 @@ jobs:
           #ls -al /tmp/arduino_build_*
           
       - name: Upload the artifacts
-        uses: skx/github-action-publish-binaries@binaires
+        uses: skx/github-action-publish-binaries@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
