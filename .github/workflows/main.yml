@@ -261,10 +261,10 @@ jobs:
             arduino --verify --pref build.path=./build_8266_softrf --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
-            #arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
+            arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp8266:esp8266:"    ]]; then
-            #arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
+            arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
             #AC added a build dir 
@@ -277,7 +277,7 @@ jobs:
             arduino --verify --pref build.path=./build_32_skyview --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
-            #arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
+            arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
           fi ;
           if [[ "$BOARD" =~ "STM32:stm32:"        ]]; then
             arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
