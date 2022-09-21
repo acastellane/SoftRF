@@ -88,7 +88,7 @@ jobs:
             arduino --install-boards esp8266:esp8266:2.7.0 ;
             arduino --board $BOARD                                     --save-prefs ;
             #AC added a build dir 
-            mkdir build_8266_softrf
+            mkdir build_8266_softrf;
             arduino --pref "build.path=$PWD/build_8266_softrf"         --save-prefs ;
             
             arduino --pref "compiler.warning_level=all"                --save-prefs ;
@@ -268,12 +268,12 @@ jobs:
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
             #AC added a build dir 
-            mkdir build_32_softrf
+            mkdir build_32_softrf;
             arduino --verify --pref build.path=./build_32_softrf    --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:esp32:"  ]]; then
             #AC added a build dir 
-            mkdir build_32_skyview
+            mkdir build_32_skyview;
             arduino --verify --pref build.path=./build_32_skyview --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
