@@ -56,13 +56,13 @@
 
 #include <battery.h>
 
-// RFM95W pin mapping
+// SX12xx pin mapping
 lmic_pinmap lmic_pins = {
-    .nss = SOC_GPIO_PIN_SS,
-    .txe = LMIC_UNUSED_PIN,
-    .rxe = LMIC_UNUSED_PIN,
-    .rst = SOC_GPIO_PIN_RST,
-    .dio = {LMIC_UNUSED_PIN, LMIC_UNUSED_PIN, LMIC_UNUSED_PIN},
+    .nss  = SOC_GPIO_PIN_SS,
+    .txe  = LMIC_UNUSED_PIN,
+    .rxe  = LMIC_UNUSED_PIN,
+    .rst  = SOC_GPIO_PIN_RST,
+    .dio  = {LMIC_UNUSED_PIN, LMIC_UNUSED_PIN, LMIC_UNUSED_PIN},
     .busy = SOC_GPIO_PIN_TXE,
     .tcxo = LMIC_UNUSED_PIN,
 };
@@ -84,8 +84,8 @@ Adafruit_NeoPixel strip = Adafruit_NeoPixel(PIX_NUM, SOC_GPIO_PIN_LED,
 #endif /* USE_NEOPIXELBUS_LIBRARY */
 
 #if defined(USE_OLED)
-U8X8_SSD1306_128X64_NONAME_2ND_HW_I2C u8x8_ttgo  (TTGO_V2_OLED_PIN_RST);
-U8X8_SSD1306_128X64_NONAME_2ND_HW_I2C u8x8_heltec(HELTEC_OLED_PIN_RST);
+U8X8_OLED_I2C_BUS_TYPE u8x8_ttgo  (TTGO_V2_OLED_PIN_RST);
+U8X8_OLED_I2C_BUS_TYPE u8x8_heltec(HELTEC_OLED_PIN_RST);
 extern U8X8_OLED_I2C_BUS_TYPE *u8x8;
 #endif /* USE_OLED */
 
@@ -143,6 +143,7 @@ extern bool loopTaskWDTEnabled;
 
 const char *ESP32S2_Device_Manufacturer = SOFTRF_IDENT;
 const char *ESP32S2_Device_Model = "Standalone Edition";
+const char *ESP32S3_Device_Model = "Prime Edition Mk.3"; /* 303a:1001 */
 const uint16_t ESP32S2_Device_Version = SOFTRF_USB_FW_VERSION;
 
 #if defined(EXCLUDE_WIFI)
@@ -229,6 +230,7 @@ static void ESP32_setup()
      *  TTGO T-Watch    |            | WINBOND_NEX_W25Q128_V
      *  Ai-T NodeMCU-S3 | ESP-S3-12K | GIGADEVICE_GD25Q64C
      *  TTGO T-Dongle   |            | BOYA_BY25Q32AL
+     *  TTGO S3 Core    |            | GIGADEVICE_GD25Q64C
      */
 
     switch(flash_id)
@@ -240,15 +242,18 @@ static void ESP32_setup()
     case MakeFlashId(WINBOND_NEX_ID, WINBOND_NEX_W25Q128_V):
       hw_info.model = SOFTRF_MODEL_SKYWATCH;
       break;
+#if defined(CONFIG_IDF_TARGET_ESP32)
     case MakeFlashId(WINBOND_NEX_ID, WINBOND_NEX_W25Q32_V):
     case MakeFlashId(BOYA_ID, BOYA_BY25Q32AL):
     default:
-#if defined(CONFIG_IDF_TARGET_ESP32)
       hw_info.model = SOFTRF_MODEL_PRIME_MK2;
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-      esp32_board = ESP32_S2_T8_V1_1;
+    default:
+      esp32_board   = ESP32_S2_T8_V1_1;
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-      esp32_board = ESP32_S3_DEVKIT;
+    case MakeFlashId(GIGADEVICE_ID, GIGADEVICE_GD25Q64):
+    default:
+      hw_info.model = SOFTRF_MODEL_PRIME_MK3;
 #else
 #error "This ESP32 family build variant is not supported!"
 #endif
@@ -264,9 +269,9 @@ static void ESP32_setup()
       lmic_pins.busy = SOC_GPIO_PIN_TBEAM_RF_BUSY_V08;
     }
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    esp32_board = ESP32_S2_T8_V1_1;
+    esp32_board      = ESP32_S2_T8_V1_1;
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    esp32_board = ESP32_S3_DEVKIT;
+    esp32_board      = ESP32_S3_DEVKIT;
 #endif /* CONFIG_IDF_TARGET_ESP32 */
   }
 
@@ -349,17 +354,13 @@ static void ESP32_setup()
                                                    TTGO_V2_OLED_PIN_SCL);
       if (has_axp2101) {
 
-        // Set the minimum system operating voltage inside the PMU,
-        // below this value will shut down the PMU
-        axp_2xxx.setMinSystemVoltage(XPOWERS_VSYS_VOL_4V5);
-
         // Set the minimum common working voltage of the PMU VBUS input,
         // below this value will turn off the PMU
-        axp_2xxx.setVbusVoltageLimit(XPOWERS_VBUS_VOL_LIM_4V36);
+        axp_2xxx.setVbusVoltageLimit(XPOWERS_AXP2101_VBUS_VOL_LIM_4V36);
 
         // Set the maximum current of the PMU VBUS input,
         // higher than this value will turn off the PMU
-        axp_2xxx.setVbusCurrentLimit(XPOWERS_VBUS_CUR_LIM_1500MA);
+        axp_2xxx.setVbusCurrentLimit(XPOWERS_AXP2101_VBUS_CUR_LIM_1500MA);
 
         // DCDC1 1500~3400mV, IMAX=2A
         axp_2xxx.setDC1Voltage(3300); // ESP32,  AXP2101 power-on value: 3300
@@ -376,18 +377,18 @@ static void ESP32_setup()
         axp_2xxx.enableALDO2();
         axp_2xxx.enableALDO3();
 
-        axp_2xxx.enableChargingLed();
-        axp_2xxx.setChargingLedFreq(XPOWERS_CHG_LED_FRE_0HZ);
+        axp_2xxx.setChargingLedMode(XPOWERS_CHG_LED_ON);
 
         pinMode(SOC_GPIO_PIN_TBEAM_V08_PMU_IRQ, INPUT /* INPUT_PULLUP */);
 
         attachInterrupt(digitalPinToInterrupt(SOC_GPIO_PIN_TBEAM_V08_PMU_IRQ),
                         ESP32_PMU_Interrupt_handler, FALLING);
 
-        axp_2xxx.disableIRQ(XPOWERS_ALL_IRQ);
+        axp_2xxx.disableIRQ(XPOWERS_AXP2101_ALL_IRQ);
         axp_2xxx.clearIrqStatus();
 
-        axp_2xxx.enableIRQ(XPOWERS_PKEY_LONG_IRQ | XPOWERS_PKEY_SHORT_IRQ);
+        axp_2xxx.enableIRQ(XPOWERS_AXP2101_PKEY_LONG_IRQ |
+                           XPOWERS_AXP2101_PKEY_SHORT_IRQ);
 
         hw_info.revision = 12;
         hw_info.pmu = PMU_AXP2101;
@@ -412,33 +413,11 @@ static void ESP32_setup()
                  SOC_GPIO_PIN_T8_S2_CONS_RX, SOC_GPIO_PIN_T8_S2_CONS_TX);
 #endif /* USE_USB_HOST */
 
-#if defined(ARDUINO_ESP32S2_USB)
-    USB.manufacturerName(ESP32S2_Device_Manufacturer);
-    USB.productName(ESP32S2_Device_Model);
-    USB.firmwareVersion(ESP32S2_Device_Version);
-//  USB.serialNumber("12345677890");
-//  USB.begin();
-#endif /* ARDUINO_ESP32S2_USB */
 #endif /* CONFIG_IDF_TARGET_ESP32S2 */
 
 #if defined(CONFIG_IDF_TARGET_ESP32S3)
-  } else if (esp32_board == ESP32_S3_DEVKIT) {
-    lmic_pins.nss  = SOC_GPIO_PIN_S3_SS;
-    lmic_pins.rst  = SOC_GPIO_PIN_S3_RST;
-    lmic_pins.busy = SOC_GPIO_PIN_S3_BUSY;
-
-    hw_info.revision = 203;
-
-#if ARDUINO_USB_CDC_ON_BOOT
-    USB.manufacturerName(ESP32S2_Device_Manufacturer);
-    USB.productName(ESP32S2_Device_Model);
-    USB.firmwareVersion(ESP32S2_Device_Version);
-
-    SerialOutput.begin(SERIAL_OUT_BR, SERIAL_OUT_BITS,
-                       SOC_GPIO_PIN_S3_CONS_RX,
-                       SOC_GPIO_PIN_S3_CONS_TX);
-#endif /* ARDUINO_USB_CDC_ON_BOOT */
-
+  } else if (hw_info.model == SOFTRF_MODEL_PRIME_MK3 ||
+             esp32_board   == ESP32_S3_DEVKIT) {
     Wire1.begin(SOC_GPIO_PIN_S3_PMU_SDA , SOC_GPIO_PIN_S3_PMU_SCL);
     Wire1.beginTransmission(AXP2101_SLAVE_ADDRESS);
     bool has_axp2101 = (Wire1.endTransmission() == 0) &&
@@ -446,21 +425,17 @@ static void ESP32_setup()
                                       SOC_GPIO_PIN_S3_PMU_SDA,
                                       SOC_GPIO_PIN_S3_PMU_SCL);
     if (has_axp2101) {
-
-      // esp32_board = ESP32_TTGO_T_BEAM_SUPREME;
-      hw_info.pmu = PMU_AXP2101;
-
-      // Set the minimum system operating voltage inside the PMU,
-      // below this value will shut down the PMU
-      axp_2xxx.setMinSystemVoltage(XPOWERS_VSYS_VOL_4V5);
+      esp32_board   = ESP32_TTGO_T_BEAM_SUPREME;
+      hw_info.model = SOFTRF_MODEL_PRIME_MK3; /* allow psramFound() to fail */
+      hw_info.pmu   = PMU_AXP2101;
 
       // Set the minimum common working voltage of the PMU VBUS input,
       // below this value will turn off the PMU
-      axp_2xxx.setVbusVoltageLimit(XPOWERS_VBUS_VOL_LIM_4V36);
+      axp_2xxx.setVbusVoltageLimit(XPOWERS_AXP2101_VBUS_VOL_LIM_4V36);
 
       // Set the maximum current of the PMU VBUS input,
       // higher than this value will turn off the PMU
-      axp_2xxx.setVbusCurrentLimit(XPOWERS_VBUS_CUR_LIM_1500MA);
+      axp_2xxx.setVbusCurrentLimit(XPOWERS_AXP2101_VBUS_CUR_LIM_1500MA);
 
       // DCDC1 1500~3400mV, IMAX=2A
       axp_2xxx.setDC1Voltage(3300);
@@ -469,32 +444,48 @@ static void ESP32_setup()
       axp_2xxx.setDC5Voltage(3700);
 
       // ALDO 500~3500V, 100mV/step, IMAX=300mA
-      axp_2xxx.setALDO1Voltage(3300);
-      axp_2xxx.setALDO2Voltage(3300);
-      axp_2xxx.setALDO3Voltage(3300);
+      axp_2xxx.setALDO3Voltage(3300); // LoRa, AXP2101 power-on value: 3300
+      axp_2xxx.setALDO4Voltage(3300); // GNSS, AXP2101 power-on value: 2900
 
       // axp_2xxx.enableDC1();
       axp_2xxx.enableDC5();
 
-      axp_2xxx.enableALDO1();
-      axp_2xxx.enableALDO2();
       axp_2xxx.enableALDO3();
+      axp_2xxx.enableALDO4();
 
-      axp_2xxx.enableChargingLed();
-      axp_2xxx.setChargingLedFreq(XPOWERS_CHG_LED_FRE_0HZ);
+      axp_2xxx.setChargingLedMode(XPOWERS_CHG_LED_ON);
 
       pinMode(SOC_GPIO_PIN_S3_PMU_IRQ, INPUT /* INPUT_PULLUP */);
 
       attachInterrupt(digitalPinToInterrupt(SOC_GPIO_PIN_S3_PMU_IRQ),
                       ESP32_PMU_Interrupt_handler, FALLING);
 
-      axp_2xxx.disableIRQ(XPOWERS_ALL_IRQ);
+      axp_2xxx.disableIRQ(XPOWERS_AXP2101_ALL_IRQ);
       axp_2xxx.clearIrqStatus();
 
-      axp_2xxx.enableIRQ(XPOWERS_PKEY_LONG_IRQ | XPOWERS_PKEY_SHORT_IRQ);
+      axp_2xxx.enableIRQ(XPOWERS_AXP2101_PKEY_LONG_IRQ |
+                         XPOWERS_AXP2101_PKEY_SHORT_IRQ);
+
+      /* Wake up Quectel L76K GNSS */
+      digitalWrite(SOC_GPIO_PIN_S3_GNSS_WAKE, HIGH);
+      pinMode(SOC_GPIO_PIN_S3_GNSS_WAKE, OUTPUT);
+
     } else {
       WIRE_FINI(Wire1);
+      esp32_board      = ESP32_S3_DEVKIT;
+      hw_info.model    = SOFTRF_MODEL_STANDALONE;
+      hw_info.revision = 203;
     }
+
+#if ARDUINO_USB_CDC_ON_BOOT
+    SerialOutput.begin(SERIAL_OUT_BR, SERIAL_OUT_BITS,
+                       SOC_GPIO_PIN_S3_CONS_RX,
+                       SOC_GPIO_PIN_S3_CONS_TX);
+#endif /* ARDUINO_USB_CDC_ON_BOOT */
+
+    lmic_pins.nss  = SOC_GPIO_PIN_S3_SS;
+    lmic_pins.rst  = SOC_GPIO_PIN_S3_RST;
+    lmic_pins.busy = SOC_GPIO_PIN_S3_BUSY;
 
     /* uSD-SPI init */
     uSD_SPI.begin(SOC_GPIO_PIN_S3_SD_SCK,
@@ -507,6 +498,21 @@ static void ESP32_setup()
   }
 
 #if ARDUINO_USB_CDC_ON_BOOT && (defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3))
+  if (USB.manufacturerName(ESP32S2_Device_Manufacturer)) {
+    char usb_serial_number[16];
+
+    snprintf(usb_serial_number, sizeof(usb_serial_number),
+             "%02X%02X%02X%02X%02X%02X",
+             efuse_mac[0], efuse_mac[1], efuse_mac[2],
+             efuse_mac[3], efuse_mac[4], efuse_mac[5]);
+
+    USB.productName(esp32_board == ESP32_TTGO_T_BEAM_SUPREME ?
+                    ESP32S3_Device_Model : ESP32S2_Device_Model);
+    USB.firmwareVersion(ESP32S2_Device_Version);
+    USB.serialNumber(usb_serial_number);
+    USB.begin();
+  }
+
   Serial.begin(SERIAL_OUT_BR);
 
   for (int i=0; i < 20; i++) {if (Serial) break; else delay(100);}
@@ -556,6 +562,7 @@ static void ESP32_post_init()
   switch (settings->nmea_out)
   {
     case NMEA_UART       :  Serial.println(F("UART"));      break;
+    case NMEA_USB        :  Serial.println(F("USB CDC"));   break;
     case NMEA_UDP        :  Serial.println(F("UDP"));       break;
     case NMEA_TCP        :  Serial.println(F("TCP"));       break;
     case NMEA_BLUETOOTH  :  Serial.println(F("Bluetooth")); break;
@@ -567,6 +574,7 @@ static void ESP32_post_init()
   switch (settings->gdl90)
   {
     case GDL90_UART      :  Serial.println(F("UART"));      break;
+    case GDL90_USB       :  Serial.println(F("USB CDC"));   break;
     case GDL90_UDP       :  Serial.println(F("UDP"));       break;
     case GDL90_BLUETOOTH :  Serial.println(F("Bluetooth")); break;
     case GDL90_OFF       :
@@ -577,6 +585,7 @@ static void ESP32_post_init()
   switch (settings->d1090)
   {
     case D1090_UART      :  Serial.println(F("UART"));      break;
+    case D1090_USB       :  Serial.println(F("USB CDC"));   break;
     case D1090_BLUETOOTH :  Serial.println(F("Bluetooth")); break;
     case D1090_OFF       :
     default              :  Serial.println(F("NULL"));      break;
@@ -686,9 +695,9 @@ static void ESP32_loop()
 
     if (isTimeToBattery()) {
       if (Battery_voltage() > Battery_threshold()) {
-        axp_2xxx.setChargingLedFreq(XPOWERS_CHG_LED_FRE_0HZ);
+        axp_2xxx.setChargingLedMode(XPOWERS_CHG_LED_ON);
       } else {
-        axp_2xxx.setChargingLedFreq(XPOWERS_CHG_LED_FRE_1HZ);
+        axp_2xxx.setChargingLedMode(XPOWERS_CHG_LED_BLINK_1HZ);
       }
     }
     break;
@@ -722,7 +731,8 @@ static void ESP32_fini(int reason)
     esp_sleep_enable_ext1_wakeup(1ULL << SOC_GPIO_PIN_TWATCH_PMU_IRQ,
                                  ESP_EXT1_WAKEUP_ALL_LOW);
 
-  } else if (hw_info.model == SOFTRF_MODEL_PRIME_MK2) {
+  } else if (hw_info.model == SOFTRF_MODEL_PRIME_MK2 ||
+             hw_info.model == SOFTRF_MODEL_PRIME_MK3) {
 
     switch (hw_info.pmu)
     {
@@ -789,7 +799,7 @@ static void ESP32_fini(int reason)
       break;
 
     case PMU_AXP2101:
-      axp_2xxx.disableChargingLed();
+      axp_2xxx.setChargingLedMode(XPOWERS_CHG_LED_OFF);
 
       axp_2xxx.disableButtonBatteryCharge();
 
@@ -805,7 +815,7 @@ static void ESP32_fini(int reason)
        * - press and hold PWR button for 1-2 seconds then release, or
        * - cycle micro-USB power
        */
-      axp_2xxx.softPowerOff();
+      axp_2xxx.shutdown();
       break;
 
     case PMU_NONE:
@@ -1262,6 +1272,7 @@ static void ESP32_SPI_begin()
                 SOC_GPIO_PIN_T8_S2_MOSI, SOC_GPIO_PIN_T8_S2_SS);
       break;
     case ESP32_S3_DEVKIT:
+    case ESP32_TTGO_T_BEAM_SUPREME:
       SPI.begin(SOC_GPIO_PIN_S3_SCK,  SOC_GPIO_PIN_S3_MISO,
                 SOC_GPIO_PIN_S3_MOSI, SOC_GPIO_PIN_S3_SS);
       break;
@@ -1289,6 +1300,14 @@ static void ESP32_swSer_begin(unsigned long baud)
                            SOC_GPIO_PIN_TBEAM_V05_RX,
                            SOC_GPIO_PIN_TBEAM_V05_TX);
     }
+  } else if (hw_info.model == SOFTRF_MODEL_PRIME_MK3) {
+
+    Serial.println(F("INFO: TTGO T-Beam Supreme is detected."));
+
+    Serial_GNSS_In.begin(baud, SERIAL_IN_BITS,
+                         SOC_GPIO_PIN_S3_GNSS_RX,
+                         SOC_GPIO_PIN_S3_GNSS_TX);
+
   } else {
     if (esp32_board == ESP32_TTGO_T_WATCH) {
       Serial.println(F("INFO: TTGO T-Watch is detected."));
@@ -1341,11 +1360,12 @@ static byte ESP32_Display_setup()
     bool has_oled = false;
 
     /* SSD1306 I2C OLED probing */
-    if (esp32_board == ESP32_S3_DEVKIT) {
-      Wire1.begin(SOC_GPIO_PIN_S3_PMU_SDA, SOC_GPIO_PIN_S3_PMU_SCL);
-      Wire1.beginTransmission(SSD1306_OLED_I2C_ADDR);
-      has_oled = (Wire1.endTransmission() == 0);
-      WIRE_FINI(Wire1);
+    if (esp32_board == ESP32_S3_DEVKIT ||
+        esp32_board == ESP32_TTGO_T_BEAM_SUPREME) {
+      Wire.begin(SOC_GPIO_PIN_S3_SDA, SOC_GPIO_PIN_S3_SCL);
+      Wire.beginTransmission(SSD1306_OLED_I2C_ADDR);
+      has_oled = (Wire.endTransmission() == 0);
+      WIRE_FINI(Wire);
       if (has_oled) {
         u8x8 = &u8x8_ttgo;
         rval = DISPLAY_OLED_TTGO;
@@ -1772,9 +1792,10 @@ static void ESP32_Battery_setup()
 {
   if ((hw_info.model    == SOFTRF_MODEL_PRIME_MK2 &&
        hw_info.revision >= 8)                     ||
+       hw_info.model    == SOFTRF_MODEL_PRIME_MK3 ||
        hw_info.model    == SOFTRF_MODEL_SKYWATCH) {
 
-    /* T-Beam v08 and T-Watch have PMU */
+    /* T-Beam v08+, T-Beam Supreme and T-Watch have PMU */
 
     /* TBD */
   } else {
@@ -1802,6 +1823,7 @@ static float ESP32_Battery_param(uint8_t param)
     rval = (hw_info.model == SOFTRF_MODEL_PRIME_MK2  && hw_info.revision ==  8) ?
             BATTERY_THRESHOLD_LIPO + 0.1 :
             hw_info.model == SOFTRF_MODEL_PRIME_MK2  ||
+            hw_info.model == SOFTRF_MODEL_PRIME_MK3  || /* TBD */
             /* TTGO T3 V2.1.6 */
            (hw_info.model == SOFTRF_MODEL_STANDALONE && hw_info.revision == 16) ?
             BATTERY_THRESHOLD_LIPO : BATTERY_THRESHOLD_NIMHX2;
@@ -1811,6 +1833,7 @@ static float ESP32_Battery_param(uint8_t param)
     rval = (hw_info.model == SOFTRF_MODEL_PRIME_MK2  && hw_info.revision ==  8) ?
             BATTERY_CUTOFF_LIPO + 0.2 :
             hw_info.model == SOFTRF_MODEL_PRIME_MK2  ||
+            hw_info.model == SOFTRF_MODEL_PRIME_MK3  || /* TBD */
             /* TTGO T3 V2.1.6 */
            (hw_info.model == SOFTRF_MODEL_STANDALONE && hw_info.revision == 16) ?
             BATTERY_CUTOFF_LIPO : BATTERY_CUTOFF_NIMHX2;
@@ -1898,7 +1921,8 @@ static bool ESP32_Baro_setup()
 
     Wire.setPins(SOC_GPIO_PIN_T8_S2_SDA, SOC_GPIO_PIN_T8_S2_SCL);
 
-  } else if (esp32_board == ESP32_S3_DEVKIT) {
+  } else if (esp32_board == ESP32_S3_DEVKIT ||
+             esp32_board == ESP32_TTGO_T_BEAM_SUPREME) {
 
     Wire.setPins(SOC_GPIO_PIN_S3_SDA, SOC_GPIO_PIN_S3_SCL);
 

@@ -115,10 +115,15 @@ extern Adafruit_NeoPixel strip;
 #define SOC_GPIO_PIN_GNSS_RX    23
 #define SOC_GPIO_PIN_GNSS_TX    12
 #define SOC_GPIO_PIN_BATTERY    36
+
 #if defined(CONFIG_IDF_TARGET_ESP32)
 #define SOC_GPIO_PIN_LED        25
-#else
+#elif defined(CONFIG_IDF_TARGET_ESP32S2)
 #define SOC_GPIO_PIN_LED        7
+#elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#define SOC_GPIO_PIN_LED        SOC_UNUSED_PIN /* TBD 14? */
+#else
+#error "This ESP32 family build variant is not supported!"
 #endif
 
 #define SOC_GPIO_PIN_STATUS   (hw_info.model != SOFTRF_MODEL_PRIME_MK2 ?\
@@ -131,10 +136,12 @@ extern Adafruit_NeoPixel strip;
                                       SOC_GPIO_PIN_TBEAM_LED_V11 :      \
                                       SOC_UNUSED_PIN))))
 
-#define SOC_GPIO_PIN_GNSS_PPS (hw_info.model != SOFTRF_MODEL_PRIME_MK2 ?\
-                                SOC_UNUSED_PIN :                        \
-                                (hw_info.revision == 8 ?                \
-                                  SOC_GPIO_PIN_TBEAM_V08_PPS :          \
+#define SOC_GPIO_PIN_GNSS_PPS (hw_info.model == SOFTRF_MODEL_PRIME_MK3 ?  \
+                                SOC_GPIO_PIN_S3_GNSS_PPS :                \
+                                (hw_info.model == SOFTRF_MODEL_PRIME_MK2 ?\
+                                  (hw_info.revision >= 8 ?                \
+                                    SOC_GPIO_PIN_TBEAM_V08_PPS :          \
+                                    SOC_UNUSED_PIN) :                     \
                                   SOC_UNUSED_PIN))
 
 #define SOC_GPIO_PIN_BUZZER   (hw_info.model == SOFTRF_MODEL_PRIME_MK2 ?\
@@ -320,7 +327,7 @@ extern Adafruit_NeoPixel strip;
 #define SOC_GPIO_PIN_S3_BUTTON          0 // "strapping" pin (S)
 
 /* ESP32-S3 section 2 (reserved pins) */
-// 17,18 - I2C; 33,34,38,(47 ? - DC) - TFT/EINK; 35,36,37,39 - uSD; 2 - SX1276
+// 17,18 - I2C; 33,34,39,(47 ? - DC) - TFT/EINK; 35,36,37,38 - uSD; 2 - SX1276
 
 // TFT
 #define SOC_GPIO_PIN_S3_TFT_MOSI        35
@@ -328,10 +335,10 @@ extern Adafruit_NeoPixel strip;
 #define SOC_GPIO_PIN_S3_TFT_SCK         36
 #define SOC_GPIO_PIN_S3_TFT_SS          34
 #define SOC_GPIO_PIN_S3_TFT_DC          37
-#define SOC_GPIO_PIN_S3_TFT_RST         38
+#define SOC_GPIO_PIN_S3_TFT_RST         39
 #define SOC_GPIO_PIN_S3_TFT_BL          33
 
-// I2C
+// 1st I2C bus (OLED display, air pressure sensor)
 #define SOC_GPIO_PIN_S3_SDA             17
 #define SOC_GPIO_PIN_S3_SCL             18
 
@@ -339,7 +346,7 @@ extern Adafruit_NeoPixel strip;
 #define SOC_GPIO_PIN_S3_SD_MOSI         35
 #define SOC_GPIO_PIN_S3_SD_MISO         37
 #define SOC_GPIO_PIN_S3_SD_SCK          36
-#define SOC_GPIO_PIN_S3_SD_SS           39
+#define SOC_GPIO_PIN_S3_SD_SS           38
 
 /* ESP32-S3 section 3 (spare pins) */
 // 3(S), 14, 21, 45(S), 46(S), 47, 48
@@ -347,13 +354,13 @@ extern Adafruit_NeoPixel strip;
 // battery voltage (ADC)
 #define SOC_GPIO_PIN_S3_BATTERY         3 // (S)
 
-// LEDs, active state - HIGH
-#define SOC_GPIO_PIN_S3_STATUS          39
 /* auxillary */
+// Devkit LEDs, active state - HIGH
 #define SOC_GPIO_PIN_S3_LED_RED         5
 #define SOC_GPIO_PIN_S3_LED_GREEN       6
 #define SOC_GPIO_PIN_S3_LED_BLUE        7
-#define SOC_GPIO_PIN_S3_LED4            38
+#define SOC_GPIO_PIN_S3_LED_WHITE       38
+#define SOC_GPIO_PIN_S3_LED_YELLOW      39
 
 extern WebServer server;
 
@@ -450,7 +457,11 @@ struct rst_info {
 #define PMK2_SLEEP_MODE 3      //  60 uA : axp.shutdown()
 
 #if defined(USE_OLED)
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+#define U8X8_OLED_I2C_BUS_TYPE  U8X8_SSD1306_128X64_NONAME_HW_I2C
+#else
 #define U8X8_OLED_I2C_BUS_TYPE  U8X8_SSD1306_128X64_NONAME_2ND_HW_I2C
+#endif /* CONFIG_IDF_TARGET_ESP32S3 */
 #endif /* USE_OLED */
 
 #endif /* PLATFORM_ESP32_H */

@@ -66,26 +66,26 @@ void setup()
     // Set the minimum system operating voltage inside the PMU,
     // below this value will shut down the PMU
     // Range: 2600~3300mV
-    PMU.setMinSystemVoltage(2700);
+    PMU.setSysPowerDownVoltage(2700);
 
     // Set the minimum common working voltage of the PMU VBUS input,
     // below this value will turn off the PMU
-    PMU.setVbusVoltageLimit(XPOWERS_VBUS_VOL_LIM_4V5);
+    PMU.setVbusVoltageLimit(XPOWERS_AXP192_VBUS_VOL_LIM_4V5);
 
     // Turn off USB input current limit
-    PMU.disableVbusCurrLimit();
+    PMU.setVbusCurrentLimit(XPOWERS_AXP192_VBUS_CUR_LIM_OFF);
 
     // DC1 700~3500mV, IMAX=1.2A
     PMU.setDC1Voltage(3300);
-    Serial.printf("DC1  :%s   Voltage:%u mV \n",  PMU.isEnableDC1()  ? "ENABLE" : "DISABLE", PMU.getDC1Voltage());
+    Serial.printf("DC1  :%s   Voltage:%u mV \n",  PMU.isEnableDC1()  ? "+" : "-", PMU.getDC1Voltage());
 
     // DC2 700~2750mV, IMAX=1.6A;
     PMU.setDC2Voltage(700);
-    Serial.printf("DC2  :%s   Voltage:%u mV \n",  PMU.isEnableDC2()  ? "ENABLE" : "DISABLE", PMU.getDC2Voltage());
+    Serial.printf("DC2  :%s   Voltage:%u mV \n",  PMU.isEnableDC2()  ? "+" : "-", PMU.getDC2Voltage());
 
     // DC3 700~3500mV,IMAX=0.7A;
     PMU.setDC3Voltage(3300);
-    Serial.printf("DC3  :%s   Voltage:%u mV \n",  PMU.isEnableDC3()  ? "ENABLE" : "DISABLE", PMU.getDC3Voltage());
+    Serial.printf("DC3  :%s   Voltage:%u mV \n",  PMU.isEnableDC3()  ? "+" : "-", PMU.getDC3Voltage());
 
 
     //LDO2 1800~3300V, 100mV/step, IMAX=200mA
@@ -111,23 +111,23 @@ void setup()
     Serial.printf("DC2  :%s   Voltage:%u mV \n",  PMU.isEnableDC2()  ? "ENABLE" : "DISABLE", PMU.getDC2Voltage());
     Serial.printf("DC3  :%s   Voltage:%u mV \n",  PMU.isEnableDC3()  ? "ENABLE" : "DISABLE", PMU.getDC3Voltage());
     Serial.println("LDO=======================================================================");
-    Serial.printf("LDO2:%s   Voltage:%u mV\n",  PMU.isEnableLDO2()  ? "ENABLE" : "DISABLE", PMU.getLDO2Voltage());
-    Serial.printf("LDO3:%s   Voltage:%u mV\n",  PMU.isEnableLDO3()  ? "ENABLE" : "DISABLE", PMU.getLDO3Voltage());
-    Serial.printf("LDOio:%s   Voltage:%u mV\n",  PMU.isEnableLDOio()  ? "ENABLE" : "DISABLE", PMU.getLDOioVoltage());
-    Serial.println("BLDO=======================================================================");
+    Serial.printf("LDO2: %s   Voltage:%u mV\n",  PMU.isEnableLDO2()  ? "ENABLE" : "DISABLE", PMU.getLDO2Voltage());
+    Serial.printf("LDO3: %s   Voltage:%u mV\n",  PMU.isEnableLDO3()  ? "ENABLE" : "DISABLE", PMU.getLDO3Voltage());
+    Serial.printf("LDOio: %s   Voltage:%u mV\n",  PMU.isEnableLDOio()  ? "ENABLE" : "DISABLE", PMU.getLDOioVoltage());
+    Serial.println("==========================================================================");
 
     // Set the time of pressing the button to turn off
-    PMU.setPowerKeyPressOffTime(XPOWERS_POWEROFF_4S);
+    PMU.setPowerKeyPressOffTime(XPOWERS_AXP192_POWEROFF_4S);
     uint8_t opt = PMU.getPowerKeyPressOffTime();
     Serial.print("PowerKeyPressOffTime:");
     switch (opt) {
-    case XPOWERS_POWEROFF_4S: Serial.println("4 Second");
+    case XPOWERS_AXP192_POWEROFF_4S: Serial.println("4 Second");
         break;
-    case XPOWERS_POWEROFF_65: Serial.println("6 Second");
+    case XPOWERS_AXP192_POWEROFF_65: Serial.println("6 Second");
         break;
-    case XPOWERS_POWEROFF_8S: Serial.println("8 Second");
+    case XPOWERS_AXP192_POWEROFF_8S: Serial.println("8 Second");
         break;
-    case XPOWERS_POWEROFF_16S: Serial.println("10 Second");
+    case XPOWERS_AXP192_POWEROFF_10S: Serial.println("10 Second");
         break;
     default:
         break;
@@ -164,48 +164,51 @@ void setup()
     PMU.enableBattVoltageMeasure();
     PMU.enableSystemVoltageMeasure();
 
-    // Manual control CHGLED
-    // PMU.setChargerLedFunction(XPOWER_CHGLED_CTRL_MANUAL);
-    // PMU.setChargingLedFreq(XPOWERS_CHG_LED_FRE_4HZ);
-
-    // The default setting is CHGLED is automatically controlled by the PMU.
-    PMU.setChargerLedFunction(XPOWER_CHGLED_CTRL_CHGER);
+    /*
+      The default setting is CHGLED is automatically controlled by the PMU.
+    - XPOWERS_CHG_LED_OFF,
+    - XPOWERS_CHG_LED_BLINK_1HZ,
+    - XPOWERS_CHG_LED_BLINK_4HZ,
+    - XPOWERS_CHG_LED_ON,
+    - XPOWERS_CHG_LED_CTRL_CHG,
+    * */
+    PMU.setChargingLedMode(XPOWERS_CHG_LED_OFF);
 
 
     pinMode(pmu_irq_pin, INPUT);
     attachInterrupt(pmu_irq_pin, setFlag, FALLING);
 
     // Disable all interrupts
-    PMU.disableIRQ(XPOWERS_ALL_IRQ);
+    PMU.disableIRQ(XPOWERS_AXP192_ALL_IRQ);
     // Clear all interrupt flags
     PMU.clearIrqStatus();
     // Enable the required interrupt function
     PMU.enableIRQ(
-        XPOWERS_BAT_INSERT_IRQ    | XPOWERS_BAT_REMOVE_IRQ      |   //BATTERY
-        XPOWERS_VBUS_INSERT_IRQ   | XPOWERS_VBUS_REMOVE_IRQ     |   //VBUS
-        XPOWERS_PKEY_SHORT_IRQ    | XPOWERS_PKEY_LONG_IRQ       |   //POWER KEY
-        XPOWERS_BAT_CHG_DONE_IRQ  | XPOWERS_BAT_CHG_START_IRQ   |    //CHARGE
-        // XPOWERS_PKEY_NEGATIVE_IRQ | XPOWERS_PKEY_POSITIVE_IRQ   |   //POWER KEY
-        XPOWERS_TIMER_TIMEOUT_IRQ               //Timer
+        XPOWERS_AXP192_BAT_INSERT_IRQ    | XPOWERS_AXP192_BAT_REMOVE_IRQ      |   //BATTERY
+        XPOWERS_AXP192_VBUS_INSERT_IRQ   | XPOWERS_AXP192_VBUS_REMOVE_IRQ     |   //VBUS
+        XPOWERS_AXP192_PKEY_SHORT_IRQ    | XPOWERS_AXP192_PKEY_LONG_IRQ       |   //POWER KEY
+        XPOWERS_AXP192_BAT_CHG_DONE_IRQ  | XPOWERS_AXP192_BAT_CHG_START_IRQ   |    //CHARGE
+        // XPOWERS_AXP192_PKEY_NEGATIVE_IRQ | XPOWERS_AXP192_PKEY_POSITIVE_IRQ   |   //POWER KEY
+        XPOWERS_AXP192_TIMER_TIMEOUT_IRQ               //Timer
     );
 
     // Set constant current charge current limit
-    PMU.setChargerConstantCurr(XPOWERS_ICC_CHG_280MA);
+    PMU.setChargerConstantCurr(XPOWERS_AXP192_CHG_CUR_280MA);
     // Set stop charging termination current
-    PMU.setChargerTerminationCurr(XPOWERS_CHG_ITERM_LESS_10_PERCENT);
+    PMU.setChargerTerminationCurr(XPOWERS_AXP192_CHG_ITERM_LESS_10_PERCENT);
 
     // Set charge cut-off voltage
-    PMU.setChargerVoltageLimit(XPOWERS_CHG_VOL_4V2);
+    PMU.setChargeTargetVoltage(XPOWERS_AXP192_CHG_VOL_4V2);
 
     // Cache writes and reads, as long as the PMU remains powered, the data will always be stored inside the PMU
     Serial.println("Write pmu data buffer .");
-    uint8_t data[XPOWERS_DATA_BUFFER_SIZE] = {1, 2, 3, 4, 5, 6};
-    PMU.writeDataBuffer(data, XPOWERS_DATA_BUFFER_SIZE);
-    memset(data, 0, XPOWERS_DATA_BUFFER_SIZE);
+    uint8_t data[XPOWERS_AXP192_DATA_BUFFER_SIZE] = {1, 2, 3, 4, 5, 6};
+    PMU.writeDataBuffer(data, XPOWERS_AXP192_DATA_BUFFER_SIZE);
+    memset(data, 0, XPOWERS_AXP192_DATA_BUFFER_SIZE);
 
     Serial.print("Read pmu data buffer :");
-    PMU.readDataBuffer(data, XPOWERS_DATA_BUFFER_SIZE);
-    for (int i = 0; i < XPOWERS_DATA_BUFFER_SIZE; ++i) {
+    PMU.readDataBuffer(data, XPOWERS_AXP192_DATA_BUFFER_SIZE);
+    for (int i = 0; i < XPOWERS_AXP192_DATA_BUFFER_SIZE; ++i) {
         Serial.print(data[i]);
         Serial.print(",");
     }
@@ -324,7 +327,17 @@ void loop()
         }
         if (PMU.isPekeyShortPressIrq()) {
             Serial.println("isPekeyShortPress");
+
             // enterPmuSleep();
+
+            //CHG LED mode test
+            uint8_t m =  PMU.getChargingLedMode();
+            Serial.print("getChargingLedMode:");
+            Serial.println(m++);
+            m %= XPOWERS_CHG_LED_CTRL_CHG;
+            Serial.printf("setChargingLedMode:%u", m);
+            PMU.setChargingLedMode(m);
+
         }
         if (PMU.isPekeyLongPressIrq()) {
             Serial.println("isPekeyLongPress");
