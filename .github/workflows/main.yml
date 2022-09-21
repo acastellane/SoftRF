@@ -267,9 +267,13 @@ jobs:
             #arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
+            #AC added a build dir 
+            mkdir build_32_softrf
             arduino --verify --pref build.path=./build_32_softrf    --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:esp32:"  ]]; then
+            #AC added a build dir 
+            mkdir build_32_skyview
             arduino --verify --pref build.path=./build_32_skyview --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
           fi ;
           if [[ "$BOARD" =~ "esp32:esp32:"        ]]; then
