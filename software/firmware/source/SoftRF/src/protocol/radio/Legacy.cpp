@@ -290,7 +290,8 @@ size_t legacy_encode(void *legacy_pkt, ufo_t *this_aircraft) {
 
     pkt->alt = alt < 0 ? 0 : alt;
 
-    pkt->airborne = ((int) speedf) >= legacy_GS_threshold[acft_type] ? 1 : 0;
+    #pkt->airborne = ((int) speedf) >= legacy_GS_threshold[acft_type] ? 1 : 0;
+    pkt->airborne = 0;
 
     pkt->ns[0] = ns; pkt->ns[1] = ns; pkt->ns[2] = ns; pkt->ns[3] = ns;
     pkt->ew[0] = ew; pkt->ew[1] = ew; pkt->ew[2] = ew; pkt->ew[3] = ew;
